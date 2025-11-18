@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xlate - Text Transformation Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .transform-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .transform-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .reference-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .copy-btn:hover {
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        .status {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #666;
+            min-height: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ Xlate Text Transformer</h1>
+            <p class="subtitle">Transform text between multiple encodings instantly</p>
+        </header>
+
+        <div class="grid" id="transformGrid"></div>
+    </div>
+
+    <script>
+        const transforms = [
+            {
+                id: 'text',
+                name: 'Plain Text',
+                isReference: true,
+                encode: (text) => text,
+                decode: (text) => text
+            },
+            {
+                id: 'urlEncode',
+                name: 'URL Encode',
+                encode: (text) => encodeURIComponent(text),
+                decode: (text) => {
+                    try {
+                        return decodeURIComponent(text);
+                    } catch (e) {
+                        return 'Invalid URL encoded text';
+                    }
+                }
+            },
+            {
+                id: 'base64',
+                name: 'Base64',
+                encode: (text) => btoa(unescape(encodeURIComponent(text))),
+                decode: (text) => {
+                    try {
+                        return decodeURIComponent(escape(atob(text)));
+                    } catch (e) {
+                        return 'Invalid Base64';
+                    }
+                }
+            },
+            {
+                id: 'hex',
+                name: 'Hexadecimal',
+                encode: (text) => {
+                    return Array.from(new TextEncoder().encode(text))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join(' ');
+                },
+                decode: (text) => {
+                    try {
+                        const bytes = text.replace(/\s+/g, ' ').trim().split(' ')
+                            .map(h => parseInt(h, 16));
+                        return new TextDecoder().decode(new Uint8Array(bytes));
+                    } catch (e) {
+                        return 'Invalid hex';
+                    }
+                }
+            },
+            {
+                id: 'decimal',
+                name: 'Decimal (Bytes)',
+                encode: (text) => {
+                    return Array.from(new TextEncoder().encode(text))
+                        .map(b => b.toString(10))
+                        .join(' ');
+                },
+                decode: (text) => {
+                    try {
+                        const bytes = text.replace(/\s+/g, ' ').trim().split(' ')
+                            .map(d => parseInt(d, 10));
+                        return new TextDecoder().decode(new Uint8Array(bytes));
+                    } catch (e) {
+                        return 'Invalid decimal';
+                    }
+                }
+            },
+            {
+                id: 'binary',
+                name: 'Binary',
+                encode: (text) => {
+                    return Array.from(new TextEncoder().encode(text))
+                        .map(b => b.toString(2).padStart(8, '0'))
+                        .join(' ');
+                },
+                decode: (text) => {
+                    try {
+                        const bytes = text.replace(/\s+/g, ' ').trim().split(' ')
+                            .map(b => parseInt(b, 2));
+                        return new TextDecoder().decode(new Uint8Array(bytes));
+                    } catch (e) {
+                        return 'Invalid binary';
+                    }
+                }
+            },
+            {
+                id: 'htmlEntities',
+                name: 'HTML Entities',
+                encode: (text) => {
+                    return text.replace(/[&<>"']/g, (char) => {
+                        const entities = {
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            '"': '&quot;',
+                            "'": '&#39;'
+                        };
+                        return entities[char];
+                    });
+                },
+                decode: (text) => {
+                    const textarea = document.createElement('textarea');
+                    textarea.innerHTML = text;
+                    return textarea.value;
+                }
+            },
+            {
+                id: 'rot13',
+                name: 'ROT13',
+                encode: (text) => {
+                    return text.replace(/[a-zA-Z]/g, (char) => {
+                        const start = char <= 'Z' ? 65 : 97;
+                        return String.fromCharCode(start + (char.charCodeAt(0) - start + 13) % 26);
+                    });
+                },
+                decode: (text) => {
+                    return text.replace(/[a-zA-Z]/g, (char) => {
+                        const start = char <= 'Z' ? 65 : 97;
+                        return String.fromCharCode(start + (char.charCodeAt(0) - start + 13) % 26);
+                    });
+                }
+            }
+        ];
+
+        const grid = document.getElementById('transformGrid');
+        const textareas = {};
+
+        function createCard(transform) {
+            const card = document.createElement('div');
+            card.className = 'transform-card';
+            
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = transform.name;
+            header.appendChild(title);
+            
+            if (transform.isReference) {
+                const badge = document.createElement('span');
+                badge.className = 'reference-badge';
+                badge.textContent = 'REFERENCE';
+                header.appendChild(badge);
+            }
+            
+            card.appendChild(header);
+            
+            const textarea = document.createElement('textarea');
+            textarea.id = `textarea-${transform.id}`;
+            textarea.placeholder = `Enter ${transform.name.toLowerCase()} here...`;
+            textareas[transform.id] = textarea;
+            card.appendChild(textarea);
+            
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'button-group';
+            
+            const translateBtn = document.createElement('button');
+            translateBtn.textContent = '🔄 Translate All';
+            translateBtn.onclick = () => translateFromThis(transform.id);
+            buttonGroup.appendChild(translateBtn);
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.textContent = '📋 Copy';
+            copyBtn.onclick = () => copyToClipboard(transform.id);
+            buttonGroup.appendChild(copyBtn);
+            
+            card.appendChild(buttonGroup);
+            
+            const status = document.createElement('div');
+            status.className = 'status';
+            status.id = `status-${transform.id}`;
+            card.appendChild(status);
+            
+            return card;
+        }
+
+        function translateFromThis(sourceId) {
+            const sourceTransform = transforms.find(t => t.id === sourceId);
+            const sourceText = textareas[sourceId].value;
+            
+            if (!sourceText.trim()) {
+                showStatus(sourceId, 'Please enter some text first');
+                return;
+            }
+            
+            let plainText;
+            if (sourceId === 'text') {
+                plainText = sourceText;
+            } else {
+                plainText = sourceTransform.decode(sourceText);
+            }
+            
+            transforms.forEach(transform => {
+                if (transform.id === sourceId) return;
+                
+                try {
+                    const encoded = transform.encode(plainText);
+                    textareas[transform.id].value = encoded;
+                } catch (e) {
+                    textareas[transform.id].value = 'Error encoding';
+                }
+            });
+            
+            showStatus(sourceId, '✓ Translated to all formats');
+        }
+
+        function copyToClipboard(id) {
+            const textarea = textareas[id];
+            textarea.select();
+            document.execCommand('copy');
+            showStatus(id, '✓ Copied to clipboard!');
+        }
+
+        function showStatus(id, message) {
+            const status = document.getElementById(`status-${id}`);
+            status.textContent = message;
+            setTimeout(() => {
+                status.textContent = '';
+            }, 3000);
+        }
+
+        transforms.forEach(transform => {
+            grid.appendChild(createCard(transform));
+        });
+
+        textareas['text'].value = 'Hello, World! 👋';
+        translateFromThis('text');
+    </script>
+</body>
+</html>
