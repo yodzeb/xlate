@@ -13,9 +13,10 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             min-height: 100vh;
             padding: 20px;
+            color: #333;
         }
 
         .container {
@@ -25,119 +26,126 @@
 
         header {
             text-align: center;
-            color: white;
             margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ddd;
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-size: 2em;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
         }
 
         .subtitle {
-            font-size: 1.1em;
-            opacity: 0.9;
+            font-size: 1em;
+            color: #666;
         }
 
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
+            gap: 16px;
         }
 
         .transform-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .transform-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 16px;
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
         }
 
         .card-title {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 600;
-            color: #333;
+            color: #2c3e50;
         }
 
         .reference-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2c3e50;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 0.75em;
             font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         textarea {
             width: 100%;
             min-height: 120px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
             resize: vertical;
-            transition: border-color 0.3s;
+            background: #fafafa;
         }
 
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #2c3e50;
+            background: white;
         }
 
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 12px;
+            gap: 8px;
+            margin-top: 10px;
         }
 
         button {
             flex: 1;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 8px 16px;
+            background: #2c3e50;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-weight: 600;
+            border-radius: 3px;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 0.9em;
         }
 
         button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            background: #34495e;
         }
 
         button:active {
-            transform: translateY(0);
+            background: #1a252f;
         }
 
         .copy-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: #7f8c8d;
         }
 
         .copy-btn:hover {
-            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+            background: #95a5a6;
+        }
+
+        .copy-btn:active {
+            background: #6c7a7b;
         }
 
         .status {
-            margin-top: 8px;
+            margin-top: 6px;
             font-size: 0.85em;
-            color: #666;
-            min-height: 20px;
+            color: #27ae60;
+            min-height: 18px;
+        }
+
+        .status.error {
+            color: #c0392b;
         }
 
         @media (max-width: 768px) {
@@ -146,7 +154,7 @@
             }
             
             h1 {
-                font-size: 2em;
+                font-size: 1.6em;
             }
         }
     </style>
@@ -154,8 +162,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>✨ Xlate Text Transformer</h1>
-            <p class="subtitle">Transform text between multiple encodings instantly</p>
+            <h1>Xlate Text Transformer</h1>
+            <p class="subtitle">Transform text between multiple encodings</p>
         </header>
 
         <div class="grid" id="transformGrid"></div>
@@ -185,10 +193,18 @@
             {
                 id: 'base64',
                 name: 'Base64',
-                encode: (text) => btoa(unescape(encodeURIComponent(text))),
+                encode: (text) => {
+                    try {
+                        return btoa(unescape(encodeURIComponent(text)));
+                    } catch (e) {
+                        return 'Error encoding';
+                    }
+                },
                 decode: (text) => {
                     try {
-                        return decodeURIComponent(escape(atob(text)));
+                        // Remove whitespace and newlines that might be present
+                        const cleaned = text.replace(/\s/g, '');
+                        return decodeURIComponent(escape(atob(cleaned)));
                     } catch (e) {
                         return 'Invalid Base64';
                     }
@@ -321,13 +337,13 @@
             buttonGroup.className = 'button-group';
             
             const translateBtn = document.createElement('button');
-            translateBtn.textContent = '🔄 Translate All';
+            translateBtn.textContent = 'Translate All';
             translateBtn.onclick = () => translateFromThis(transform.id);
             buttonGroup.appendChild(translateBtn);
             
             const copyBtn = document.createElement('button');
             copyBtn.className = 'copy-btn';
-            copyBtn.textContent = '📋 Copy';
+            copyBtn.textContent = 'Copy';
             copyBtn.onclick = () => copyToClipboard(transform.id);
             buttonGroup.appendChild(copyBtn);
             
@@ -346,7 +362,7 @@
             const sourceText = textareas[sourceId].value;
             
             if (!sourceText.trim()) {
-                showStatus(sourceId, 'Please enter some text first');
+                showStatus(sourceId, 'Please enter some text first', true);
                 return;
             }
             
@@ -368,19 +384,20 @@
                 }
             });
             
-            showStatus(sourceId, '✓ Translated to all formats');
+            showStatus(sourceId, 'Translated to all formats');
         }
 
         function copyToClipboard(id) {
             const textarea = textareas[id];
             textarea.select();
             document.execCommand('copy');
-            showStatus(id, '✓ Copied to clipboard!');
+            showStatus(id, 'Copied to clipboard');
         }
 
-        function showStatus(id, message) {
+        function showStatus(id, message, isError = false) {
             const status = document.getElementById(`status-${id}`);
             status.textContent = message;
+            status.className = isError ? 'status error' : 'status';
             setTimeout(() => {
                 status.textContent = '';
             }, 3000);
@@ -390,7 +407,7 @@
             grid.appendChild(createCard(transform));
         });
 
-        textareas['text'].value = 'Hello, World! 👋';
+        textareas['text'].value = 'Hello, World!';
         translateFromThis('text');
     </script>
 </body>
