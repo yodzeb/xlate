@@ -147,9 +147,9 @@ const transforms = [
                 'SHA512': new Hashes.SHA512().hex(text),
                 'RMD160': new Hashes.RMD160().hex(text)
             };
-            return Object.keys(hashes).map(function(v) {
-                return v+": "+hashes[v];
-            }).join("\n");
+            return Object.keys(hashes)
+                .map(function(v) { return v+": "+hashes[v]; })
+                .join("\n");
         }
     }
 ];
