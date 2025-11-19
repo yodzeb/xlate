@@ -1,5 +1,3 @@
-console.log("hello");
-
 const transforms = [
     {
         id: 'text',
@@ -142,16 +140,16 @@ const transforms = [
         name: 'Hashes',
         convert_from: false,
         encode: (text) => {
-            var MD5 = new Hashes.MD5().hex(text);
-            var SHA1 = new Hashes.SHA1().hex(text);
-            var SHA256 =  new Hashes.SHA256().hex(text);
-            var SHA512 = new Hashes.SHA512().hex(text);
-            var RMD160 = new Hashes.RMD160().hex(text);
-            return "MD5: " + MD5 + "\n" +
-                "SHA1: " + SHA1 + "\n" +
-                "SHA256: " + SHA256 + "\n" +
-                "SHA512: " + SHA512 + "\n" +
-                "RMD160: " + SHA512 + "\n";
+            var hashes = {
+                'MD5': new Hashes.MD5().hex(text),
+                'SHA1': new Hashes.SHA1().hex(text),
+                'SHA256': new Hashes.SHA256().hex(text),
+                'SHA512': new Hashes.SHA512().hex(text),
+                'RMD160': new Hashes.RMD160().hex(text)
+            };
+            return Object.keys(hashes).map(function(v) {
+                return v+": "+hashes[v];
+            }).join("\n");
         }
     }
 ];
