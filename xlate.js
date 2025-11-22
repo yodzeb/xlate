@@ -54,9 +54,18 @@ const transforms = [
         },
         decode: (text) => {
             try {
-                const bytes = text.replace(/\s+/g, ' ').trim().split(' ')
-                      .map(h => parseInt(h, 16));
-                return new TextDecoder().decode(new Uint8Array(bytes));
+                const arr = text
+                      .replace(/(?:\s+|[^a-fA-F0-9])/g, '')
+                      .match(/.{1,2}/g)
+                      .map(function(hh) {
+                          try {
+                              return parseInt(hh, 16);
+                          }
+                          catch(e) {
+                              return "";
+                          }
+                      });
+                return new TextDecoder().decode(new Uint8Array(arr));
             } catch (e) {
                 return 'Invalid hex';
             }
